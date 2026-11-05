@@ -5,7 +5,7 @@
 
 ## 1. Objective
 
-Collect authorized social and campaign metrics, normalize them carefully, and expose meaningful dashboards through the main NEWCONNEXT application.
+Collect authorized social and campaign metrics, normalize them carefully, and expose meaningful dashboards through the main MenerjangBadai application.
 
 Apache Superset is the visualization and BI layer. It is not a social media data collector.
 
@@ -110,7 +110,7 @@ Requirements:
 - Document guest-token expiration and renewal.
 - Avoid trusting frontend-provided brand IDs without backend authorization.
 
-## 7. NEWCONNEXT analytics pages
+## 7. MenerjangBadai analytics pages
 
 Provide:
 

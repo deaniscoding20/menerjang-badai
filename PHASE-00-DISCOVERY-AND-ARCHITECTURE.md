@@ -1,12 +1,12 @@
 # Phase 0 — Discovery and Architecture
 
-**Project:** NEWCONNEXT — AI Marketing Office  
+**Project:** MenerjangBadai — AI Marketing Office  
 **Phase type:** Discovery, architecture, and technical validation  
 **Status:** Must be completed before major implementation
 
 ## 1. Objective
 
-Establish a verified technical blueprint for NEWCONNEXT before building application features. Discover the existing environment, preserve the six existing Hermes Agent profiles, validate integration capabilities, and document architectural decisions.
+Establish a verified technical blueprint for MenerjangBadai before building application features. Discover the existing environment, preserve the six existing Hermes Agent profiles, validate integration capabilities, and document architectural decisions.
 
 Do not begin extensive feature implementation during this phase.
 
