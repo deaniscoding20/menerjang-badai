@@ -5,7 +5,7 @@
 
 ## 1. Objective
 
-Create the MenerjangBadai application skeleton with Go backend, React frontend, PostgreSQL, migrations, OIDC human authentication, RBAC foundations, audit logging, and Docker Compose development environment.
+Create the MenerjangBadai application skeleton with Go backend, React frontend, PostgreSQL, migrations, OIDC human authentication, RBAC foundations, audit logging, and Docker Compose development environment. create markdown so developer can understand what you build
 
 Implement Hexagonal Architecture from the first commit.
 
