@@ -1,0 +1,14 @@
+# Never commit credentials or local state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+web/dist/
+coverage/
+*.test
+artifacts/

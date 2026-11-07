@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, 'feat/mb-default-agent-*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  policy-tests:
+    name: Policy tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.12', '3.14']
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit and negative authorization tests
+        run: python -m unittest discover -s tests -v
+      - name: Documentation and credential-pattern checks
+        run: python scripts/check_repository.py
+      - name: Required Phase 0 deliverables exist
+        run: python scripts/check_phase_deliverables.py
+      - name: Production release marker must be internally valid
+        run: python scripts/release_readiness.py
+      - name: Compile Python and validate shell syntax
+        run: |
+          python -m compileall -q scripts tests
+          for script in scripts/*.sh; do bash -n "$script"; done
+
+  security-and-workflows:
+    name: Security and workflow lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install checksum-pinned validation tools
+        run: bash scripts/install-ci-tools.sh
+      - name: GitHub Actions semantic lint
+        run: "$HOME/.local/bin/actionlint -color"
+      - name: Scan working tree for secrets
+        run: "$HOME/.local/bin/gitleaks dir --redact --no-banner ."
+      - name: Scan Git history for secrets
+        run: "$HOME/.local/bin/gitleaks git --redact --no-banner --log-opts=--all ."
+
+  ci-gate:
+    name: CI gate
+    if: always()
+    needs: [policy-tests, security-and-workflows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every test job to pass
+        env:
+          POLICY_RESULT: ${{ needs.policy-tests.result }}
+          SECURITY_RESULT: ${{ needs.security-and-workflows.result }}
+        run: |
+          test "$POLICY_RESULT" = success
+          test "$SECURITY_RESULT" = success

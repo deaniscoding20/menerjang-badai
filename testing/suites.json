@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "mode": "development-first",
+  "database_image": "postgres:17@sha256:748a18a54d3842d43bc156f0840d78029b8d349e0feca98c12b9c4ce3404a6b3",
+  "long_suites": [
+    {"id": "authentik-browser-e2e", "status": "planned", "blocker": "Isolated Authentik issuer/client and browser fixtures not provisioned"},
+    {"id": "multi-brand-task-integration", "status": "planned", "blocker": "Finish task integration scenarios with disposable PostgreSQL"},
+    {"id": "hermes-live-scope-and-retry", "status": "planned", "blocker": "Verified private bridge and isolated test profiles required; production personas must not be mutated"},
+    {"id": "temporal-restart-and-replay", "status": "planned", "blocker": "Temporal worker and sandbox service not implemented"},
+    {"id": "minio-upload-context-isolation", "status": "planned", "blocker": "Upload pipeline, quarantine and isolated MinIO required"},
+    {"id": "approval-postiz-reconciliation", "status": "planned", "blocker": "Versioned approval and verified Postiz sandbox required; no real publishing"},
+    {"id": "metrics-superset-rls", "status": "planned", "blocker": "Authorized API sources and isolated Superset dashboards required"},
+    {"id": "backup-restore-and-migration-upgrade", "status": "planned", "blocker": "Backup/restore harness and agreed RPO/RTO missing"},
+    {"id": "deployment-rollback-rehearsal", "status": "planned", "blocker": "Staging release hook and candidate health/rollback not implemented"},
+    {"id": "load-failure-and-security-review", "status": "planned", "blocker": "Agree safe workload/latency targets; isolated failure injection and security review pending"}
+  ]
+}
