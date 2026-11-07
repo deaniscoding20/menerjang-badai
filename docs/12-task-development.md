@@ -14,7 +14,7 @@ Yang tersedia dalam source:
 - Tabel `tasks` dan `task_events`, transaksi atomic state+history+audit dan query-time org/brand grant checks.
 - Frontend board/list mencakup semua sepuluh status agar pekerjaan tidak menghilang dari tampilan.
 - Backend human-imported deliverable berversi: raw output immutable, parser v1 tujuh kind, validation status, list/detail API, current task version dan audit. UI import/list/detail sudah terintegrasi; integrasi hasil agen/revision-request workflow belum tersedia.
-- Human revision-request domain/application/HTTP/PostgreSQL/UI terintegrasi sebagai catatan tentang exact immutable deliverable, bukan perintah runtime. Migration000006 dan deferred DB fixtures tersedia tetapi belum dijalankan; review persistence selesai tanpa blocker; review UI menemukan race parent-transition→revision-submit yang masih terbuka (lihat [snapshot status](DEVELOPMENT-STATUS.md)).
+- Human revision-request domain/application/HTTP/PostgreSQL/UI terintegrasi sebagai catatan tentang exact immutable deliverable, bukan perintah runtime. Migration000006 dan deferred DB fixtures tersedia tetapi belum dijalankan; review persistence selesai tanpa blocker; race parent-transition→revision-submit sudah ditutup dengan synchronous mutation ref, regresi RED→GREEN dan review ulang independen tanpa findings (lihat [snapshot status](DEVELOPMENT-STATUS.md)).
 - Runtime `mb-dashboard` dan admin CLI explicit migrate/provision; lihat [local development](14-local-development.md).
 
 Yang **belum tersedia**:

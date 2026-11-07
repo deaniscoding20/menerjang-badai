@@ -174,6 +174,7 @@ function TaskDetailContent({ id }: { id: string }) {
  const editingRef = useRef(false);
  // Refs close same-turn races before the disabled controls rerender.
  const panelInFlight = useRef(false);
+ const mutationInFlight = useRef(false);
  const taskRefreshing = useRef(false);
  useEffect(() => { if (!query.loading) taskRefreshing.current = false; }, [query.loading]);
  const [panelPending, setPanelPending] = useState(false);
@@ -184,7 +185,7 @@ function TaskDetailContent({ id }: { id: string }) {
  const [notice, setNotice] = useState('');
  const canWrite = writableRoles.has(session.user.role);
  function beginPanelChange() {
-  if (editingRef.current || panelInFlight.current || taskRefreshing.current || pending || query.loading || query.error) return false;
+  if (editingRef.current || mutationInFlight.current || panelInFlight.current || taskRefreshing.current || pending || query.loading || query.error) return false;
   panelInFlight.current = true; setPanelPending(true); return true;
  }
  function endPanelChange() { panelInFlight.current = false; setPanelPending(false); }
@@ -192,15 +193,15 @@ function TaskDetailContent({ id }: { id: string }) {
   taskRefreshing.current = true; query.retry(); events.retry();
  }
  async function transition(status: 'ready' | 'assigned' | 'cancelled') {
-  if (pending || panelInFlight.current || taskRefreshing.current || editingRef.current || query.loading || query.error || !canWrite) return;
-  setPending(true); setMutationError(null); setNotice('');
+  if (mutationInFlight.current || pending || panelInFlight.current || taskRefreshing.current || editingRef.current || query.loading || query.error || !canWrite) return;
+  mutationInFlight.current = true; setPending(true); setMutationError(null); setNotice('');
   try {
    if (!query.data) return;
    await api.transitionTask(id, status, session.csrf_token, query.data.version);
    setConfirmCancel(false);
    setNotice('Status task diperbarui. Tidak ada perintah eksekusi yang dikirim.');
    refreshTask();
-  } catch (reason) { onError(reason); setMutationError(reason); } finally { setPending(false); }
+  } catch (reason) { onError(reason); setMutationError(reason); } finally { mutationInFlight.current = false; setPending(false); }
  }
  if (query.loading && !query.data) return <div className="tasks-page"><TaskBack /><Loading label="Memuat detail task…" /></div>;
  if (!query.data) return <div className="tasks-page"><TaskBack /><TaskError error={query.error} retry={query.retry} /></div>;
@@ -215,7 +216,7 @@ function TaskDetailContent({ id }: { id: string }) {
   <div className="task-detail-grid"><div>{editing ? <TaskForm initial={editing} brands={brands.data?.items ?? []} onCancel={() => { editingRef.current = false; setEditing(null); }} onSave={async input => {
    const update: TaskUpdate = { title: input.title, objective: input.objective, instructions: input.instructions, priority: input.priority, agent_id: input.agent_id, deadline_at:input.deadline_at, version:editing.version };
    try { await api.updateTask(id, update, session.csrf_token); editingRef.current = false; setEditing(null); setNotice('Brief task tersimpan.'); refreshTask(); } catch (reason) { onError(reason); throw reason; }
-  }} /> : <section className="panel task-brief"><div className="section-heading"><h2>Brief pekerjaan</h2>{editable && <button className="button secondary" disabled={taskBusy} onClick={() => { if (panelInFlight.current || taskRefreshing.current || pending || query.loading || query.error) return; editingRef.current = true; setEditing(task); setMutationError(null); }}>Edit brief</button>}</div><dl><dt>Objektif</dt><dd className="preserve-lines">{task.objective || 'Belum ditambahkan.'}</dd><dt>Instruksi</dt><dd className="preserve-lines">{task.instructions || 'Belum ditambahkan.'}</dd></dl></section>}
+  }} /> : <section className="panel task-brief"><div className="section-heading"><h2>Brief pekerjaan</h2>{editable && <button className="button secondary" disabled={taskBusy} onClick={() => { if (mutationInFlight.current || panelInFlight.current || taskRefreshing.current || pending || query.loading || query.error) return; editingRef.current = true; setEditing(task); setMutationError(null); }}>Edit brief</button>}</div><dl><dt>Objektif</dt><dd className="preserve-lines">{task.objective || 'Belum ditambahkan.'}</dd><dt>Instruksi</dt><dd className="preserve-lines">{task.instructions || 'Belum ditambahkan.'}</dd></dl></section>}
    <section className="panel task-history" aria-labelledby="task-history-title"><div className="section-heading"><h2 id="task-history-title"><Clock3 size={17} aria-hidden="true" />Riwayat status</h2><button className="task-text-button" disabled={events.loading || pending} onClick={events.retry}><RotateCw size={14} aria-hidden="true" />Segarkan</button></div>{events.loading ? <Loading label="Memuat riwayat status…" /> : events.error || !events.data ? <TaskError error={events.error} retry={events.retry} /> : events.data.items.length === 0 ? <p className="task-history-empty">Belum ada peristiwa yang dicatat server.</p> : <ol className="task-event-list">{[...events.data.items].sort((a, b) => a.created_at.localeCompare(b.created_at)).map(event => <li key={event.id}><div><strong>{event.from_status ? statusLabels[event.from_status] + ' → ' : ''}{statusLabels[event.to_status]}</strong><time dateTime={event.created_at}>{dateLabel(event.created_at)}</time></div><p>Oleh <span>{event.actor_id || 'Sistem'}</span></p></li>)}</ol>}<p className="task-history-note">Riwayat ini mencatat perubahan status dari API, bukan log eksekusi. Catatan manusia ditampilkan terpisah.</p></section>
    <TaskDependencies task={task} canWrite={canWrite && panelsAvailable} canRefresh={panelsAvailable} beginChange={beginPanelChange} endChange={endPanelChange} onChanged={refreshTask} />
    <TaskDeliverables task={task} canWrite={canWrite && panelsAvailable} canRefresh={panelsAvailable} beginChange={beginPanelChange} endChange={endPanelChange} onChanged={refreshTask} />

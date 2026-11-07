@@ -290,3 +290,37 @@ it('blocks sibling changes and same-turn brief edits while a revision request or
  expect(screen.getByLabelText('Output mentah untuk impor')).toHaveValue('Keep raw draft');
  expect(fetcher.mock.calls.filter(([requestPath]) => requestPath === taskPath + '/events')).toHaveLength(2);
 });
+
+it('blocks same-turn revision submission, repeated transition and brief editing after a parent transition starts', async () => {
+ const fetcher = detailTransport(); const base = fetcher.getMockImplementation()!;
+ let resolveTransition!: (value: Response) => void; let resolveTask!: (value: Response) => void; let transitioned = false;
+ fetcher.mockImplementation((requestPath: string, options: RequestInit) => {
+  if (requestPath === taskPath + '/transition' && options.method === 'POST') return new Promise<Response>(resolve => { resolveTransition = resolve; });
+  if (requestPath === path && options.method === 'POST') return new Promise<Response>(() => {});
+  if (requestPath === taskPath) return transitioned ? new Promise<Response>(resolve => { resolveTask = resolve; }) : Promise.resolve(response({ ...task, version: 7 }));
+  return base(requestPath, options);
+ });
+ await detail();
+ fireEvent.change(bodyInput(), { target: { value: 'Preserve exact human revision draft' } });
+ fireEvent.change(targetInput(), { target: { value: oldId } });
+ fireEvent.change(screen.getByLabelText('Output mentah untuk impor'), { target: { value: 'Preserve raw draft too' } });
+ const ready = screen.getByRole('button', { name: 'Tandai siap' });
+ const edit = screen.getByRole('button', { name: 'Edit brief' });
+ act(() => { fireEvent.click(ready); submitForm(); fireEvent.click(ready); fireEvent.click(edit); });
+ const posts = () => fetcher.mock.calls.filter(([, options]) => options.method === 'POST');
+ expect(posts().map(([requestPath]) => requestPath)).toEqual([taskPath + '/transition']);
+ expect(posts()[0]?.[1]).toMatchObject({ body: JSON.stringify({ status: 'ready', version: 7 }) });
+ expect(screen.queryByLabelText('Judul task *')).not.toBeInTheDocument();
+ expect(edit).toBeDisabled();
+ transitioned = true;
+ await act(async () => resolveTransition(response({ ...task, status: 'ready', version: 8 })));
+ expect(edit).toBeDisabled();
+ fireEvent.click(edit);
+ expect(screen.queryByLabelText('Judul task *')).not.toBeInTheDocument();
+ expect(posts()).toHaveLength(1);
+ await act(async () => resolveTask(response({ ...task, status: 'ready', version: 8 })));
+ await waitFor(() => expect(edit).toBeEnabled());
+ expect(bodyInput()).toHaveValue('Preserve exact human revision draft');
+ expect(targetInput()).toHaveValue(oldId);
+ expect(screen.getByLabelText('Output mentah untuk impor')).toHaveValue('Preserve raw draft too');
+});
